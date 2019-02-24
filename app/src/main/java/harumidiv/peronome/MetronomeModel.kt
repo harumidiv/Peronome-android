@@ -9,7 +9,7 @@ interface MetronomeModelInput {
 }
 
 class MetronomeModel(private var stepValue: Int): MetronomeModelInput{
-    var speed: Double = stepValue as Double
+    var speed: Double = stepValue.toDouble()
 
     override fun loadAudio() {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
@@ -32,7 +32,7 @@ class MetronomeModel(private var stepValue: Int): MetronomeModelInput{
     }
 
     override fun subTempo(): Int {
-        if(stepValue >= 40) {
+        if(stepValue <= 40) {
             return stepValue
         }
         stepValue -= 1

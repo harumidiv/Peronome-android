@@ -27,14 +27,24 @@ class MetronomeActivity : AppCompatActivity(), MetronomePresenterOutput {
         addTempoButton = findViewById(R.id.addTempoButton)
         subTempoButton = findViewById(R.id.subTempoButton)
         startStopButton = findViewById(R.id.startStopButton)
-        presenter = MetronomePresenter(this, 120.0)
+        presenter = MetronomePresenter(this, 120)
+
+        tapButton()
+    }
+    fun tapButton(){
+        addTempoButton!!.setOnClickListener {
+            presenter!!.addTempo()
+        }
+        subTempoButton!!.setOnClickListener {
+            presenter!!.subTempo()
+        }
     }
 
     /**
      *　presenter output method
      */
     override fun showLabel(tempo: String) {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        tempoLabel!!.text = tempo
     }
 
     override fun showStartMetronome(speed: Double) {
