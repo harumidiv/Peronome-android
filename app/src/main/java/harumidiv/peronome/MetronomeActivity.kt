@@ -9,8 +9,12 @@ import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.TextView
 
-class MetronomeActivity : AppCompatActivity(), MetronomePresenterOutput, Runnable {
 
+
+class MetronomeActivity : AppCompatActivity(), MetronomePresenterOutput, Runnable {
+    enum class PushButtonType{
+        ADD,SUB
+    }
     private var pendlumImage:ImageView? =null
     private var tempoLabel: TextView? = null
     private var addTempoButton: ImageButton? = null
@@ -18,6 +22,8 @@ class MetronomeActivity : AppCompatActivity(), MetronomePresenterOutput, Runnabl
     private var startStopButton: ImageButton? = null
 
     private var presenter: MetronomePresenter? = null
+
+    private var type: PushButtonType? = null
 
     /**
      * lifecycle
@@ -35,7 +41,6 @@ class MetronomeActivity : AppCompatActivity(), MetronomePresenterOutput, Runnabl
         tapButton()
     }
     var handler: Handler = Handler()
-
     val longPressHandler = Handler()
     val longPressReceiver = Runnable {
         handler.post(this)
@@ -47,6 +52,7 @@ class MetronomeActivity : AppCompatActivity(), MetronomePresenterOutput, Runnabl
             when (event!!.action) {
                 // タップされた時
                 MotionEvent.ACTION_DOWN -> {
+                    type = PushButtonType.ADD
                     presenter!!.addTempo()
                     longPressHandler.postDelayed(longPressReceiver, 500);
                 }
@@ -59,13 +65,38 @@ class MetronomeActivity : AppCompatActivity(), MetronomePresenterOutput, Runnabl
             false
         }
 
+        subTempoButton!!.setOnTouchListener{ _, event ->
+            when (event!!.action) {
+                // タップされた時
+                MotionEvent.ACTION_DOWN -> {
+                    type = PushButtonType.SUB
+                    presenter!!.subTempo()
+                    longPressHandler.postDelayed(longPressReceiver, 500);
+                }
+                // タップ終了時
+                MotionEvent.ACTION_UP -> {
+                    longPressHandler.removeCallbacks(longPressReceiver);
+                    handler.removeCallbacks(this)
+                }
+            }
+            false
+        }
+
         subTempoButton!!.setOnClickListener {
             presenter!!.subTempo()
         }
     }
 
     override fun run() {
-        presenter!!.addTempo()
+        when (type) {
+            PushButtonType.ADD -> {
+                presenter!!.addTempo()
+
+            }
+            PushButtonType.SUB -> {
+                presenter!!.subTempo()
+            }
+        }
         handler.postDelayed( this, 50)
     }
 
