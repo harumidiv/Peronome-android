@@ -2,11 +2,14 @@ package harumidiv.peronome
 
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
+import android.os.Handler
+import android.util.Log
+import android.view.MotionEvent
 import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.TextView
 
-class MetronomeActivity : AppCompatActivity(), MetronomePresenterOutput {
+class MetronomeActivity : AppCompatActivity(), MetronomePresenterOutput, Runnable {
 
     private var pendlumImage:ImageView? =null
     private var tempoLabel: TextView? = null
@@ -31,13 +34,39 @@ class MetronomeActivity : AppCompatActivity(), MetronomePresenterOutput {
 
         tapButton()
     }
+    var handler: Handler = Handler()
+
+    val longPressHandler = Handler()
+    val longPressReceiver = Runnable {
+        handler.post(this)
+    }
+
     fun tapButton(){
-        addTempoButton!!.setOnClickListener {
-            presenter!!.addTempo()
+
+        addTempoButton!!.setOnTouchListener { _, event ->
+            when (event!!.action) {
+                // タップされた時
+                MotionEvent.ACTION_DOWN -> {
+                    presenter!!.addTempo()
+                    longPressHandler.postDelayed(longPressReceiver, 500);
+                }
+                // タップ終了時
+                MotionEvent.ACTION_UP -> {
+                    longPressHandler.removeCallbacks(longPressReceiver);    // 長押し中に指を上げたらhandlerの処理を中止
+                    handler.removeCallbacks(this)
+                }
+            }
+            false
         }
+
         subTempoButton!!.setOnClickListener {
             presenter!!.subTempo()
         }
+    }
+
+    override fun run() {
+        presenter!!.addTempo()
+        handler.postDelayed( this, 50)
     }
 
     /**
