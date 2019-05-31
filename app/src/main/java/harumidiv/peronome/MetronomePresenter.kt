@@ -10,20 +10,21 @@ interface MetronomePresenterOutput {
     fun showStartMetronome(speed: Double)
     fun showStopMetronome(speed: Double)
 }
-class MetronomePresenter(output: MetronomePresenterOutput, tempo:Double): MetronomeInput {
+class MetronomePresenter(output: MetronomePresenterOutput, tempo:Int): MetronomeInput {
     val output: MetronomePresenterOutput = output
-    val tempo: Double = tempo
+    val model = MetronomeModel(stepValue = tempo)
 
 
     override fun subTempo() {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        output.showLabel(model.subTempo().toString())
+    }
+    override fun addTempo() {
+        output.showLabel(model.addTempo().toString())
     }
 
     override fun startStopState() {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
-    override fun addTempo() {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-    }
+
 }
