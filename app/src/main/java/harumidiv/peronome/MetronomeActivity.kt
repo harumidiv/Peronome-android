@@ -1,44 +1,77 @@
 package harumidiv.peronome
 
+import android.media.AudioAttributes
+import android.media.Image
+import android.media.SoundPool
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.os.Handler
 import android.util.Log
 import android.view.MotionEvent
+import android.view.View
 import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.TextView
+import java.util.concurrent.ForkJoinPool
 
 
-
-class MetronomeActivity : AppCompatActivity(), MetronomePresenterOutput, Runnable {
+class MetronomeActivity : AppCompatActivity(), MetronomePresenterOutput, Runnable,View.OnTouchListener {
     enum class PushButtonType{
         ADD,SUB
     }
-    private var pendlumImage:ImageView? =null
-    private var tempoLabel: TextView? = null
-    private var addTempoButton: ImageButton? = null
-    private var subTempoButton: ImageButton? = null
-    private var startStopButton: ImageButton? = null
+    private lateinit var pendlumImage:ImageView
+    private lateinit var tempoLabel: TextView
 
-    private var presenter: MetronomePresenter? = null
+    private lateinit var startStopButton: ImageButton
+    private lateinit var presenter: MetronomePresenter
 
     private var type: PushButtonType? = null
+
+    private lateinit var soundPool: SoundPool
+    var tempoSound = 0
 
     /**
      * lifecycle
      */
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+
+        val audioAtributes = AudioAttributes.Builder()
+            .setUsage(AudioAttributes.USAGE_GAME)
+            .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+            .build()
+        soundPool = SoundPool.Builder()
+            .setAudioAttributes(audioAtributes)
+            .setMaxStreams(2)
+            .build()
+
+        soundPool.setOnLoadCompleteListener{ soundPool, sampleId, status ->
+            Log.d("debug", "sampleId=$sampleId")
+            Log.d("debug", "status=$status")
+        }
+
+        tempoSound = soundPool.load(this, R.raw.tempo_sound, 1)
+
+
         setContentView(R.layout.activity_main)
         pendlumImage = findViewById(R.id.pendlumImage)
         tempoLabel = findViewById(R.id.tempoLabel)
-        addTempoButton = findViewById(R.id.addTempoButton)
-        subTempoButton = findViewById(R.id.subTempoButton)
+
+        //テンポの変更　
+        var addTempoButton: ImageButton = findViewById(R.id.addTempoButton)
+        addTempoButton.setOnTouchListener(this)
+        var subTempoButton: ImageButton = findViewById(R.id.subTempoButton)
+        subTempoButton.setOnTouchListener(this)
+
         startStopButton = findViewById(R.id.startStopButton)
         presenter = MetronomePresenter(this, 120)
 
-        tapButton()
+
+        startStopButton.setOnClickListener {
+            Log.d("aaa", "aaaa")
+            soundPool.play(tempoSound, 1.0f, 1.0f, 0, 0, 1.0f)
+        }
     }
     var handler: Handler = Handler()
     val longPressHandler = Handler()
@@ -46,55 +79,46 @@ class MetronomeActivity : AppCompatActivity(), MetronomePresenterOutput, Runnabl
         handler.post(this)
     }
 
-    fun tapButton(){
-
-        addTempoButton!!.setOnTouchListener { _, event ->
-            when (event!!.action) {
-                // タップされた時
-                MotionEvent.ACTION_DOWN -> {
-                    type = PushButtonType.ADD
-                    presenter!!.addTempo()
-                    longPressHandler.postDelayed(longPressReceiver, 500);
-                }
-                // タップ終了時
-                MotionEvent.ACTION_UP -> {
-                    longPressHandler.removeCallbacks(longPressReceiver);    // 長押し中に指を上げたらhandlerの処理を中止
-                    handler.removeCallbacks(this)
-                }
-            }
-            false
-        }
-
-        subTempoButton!!.setOnTouchListener{ _, event ->
-            when (event!!.action) {
-                // タップされた時
-                MotionEvent.ACTION_DOWN -> {
-                    type = PushButtonType.SUB
-                    presenter!!.subTempo()
-                    longPressHandler.postDelayed(longPressReceiver, 500);
-                }
-                // タップ終了時
-                MotionEvent.ACTION_UP -> {
-                    longPressHandler.removeCallbacks(longPressReceiver);
-                    handler.removeCallbacks(this)
+    override fun onTouch(v: View?, event: MotionEvent?): Boolean {
+        when (v!!.id) {
+            R.id.addTempoButton -> {
+                when (event!!.action) {
+                    MotionEvent.ACTION_DOWN -> {
+                        type = PushButtonType.ADD
+                        presenter.addTempo()
+                        longPressHandler.postDelayed(longPressReceiver, 500);
+                    }
+                    MotionEvent.ACTION_UP -> {
+                        longPressHandler.removeCallbacks(longPressReceiver);
+                        handler.removeCallbacks(this)
+                    }
                 }
             }
-            false
+            R.id.subTempoButton -> {
+                when (event!!.action) {
+                    MotionEvent.ACTION_DOWN -> {
+                        type = PushButtonType.SUB
+                        presenter.subTempo()
+                        longPressHandler.postDelayed(longPressReceiver, 500);
+                    }
+                    MotionEvent.ACTION_UP -> {
+                        longPressHandler.removeCallbacks(longPressReceiver);
+                        handler.removeCallbacks(this)
+                    }
+                }
+            }
         }
-
-        subTempoButton!!.setOnClickListener {
-            presenter!!.subTempo()
-        }
+        return false
     }
 
     override fun run() {
         when (type) {
             PushButtonType.ADD -> {
-                presenter!!.addTempo()
+                presenter.addTempo()
 
             }
             PushButtonType.SUB -> {
-                presenter!!.subTempo()
+                presenter.subTempo()
             }
         }
         handler.postDelayed( this, 50)
@@ -104,7 +128,7 @@ class MetronomeActivity : AppCompatActivity(), MetronomePresenterOutput, Runnabl
      *　presenter output method
      */
     override fun showLabel(tempo: String) {
-        tempoLabel!!.text = tempo
+        tempoLabel.text = tempo
     }
 
     override fun showStartMetronome(speed: Double) {
