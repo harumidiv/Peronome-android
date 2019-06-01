@@ -1,7 +1,6 @@
 package harumidiv.peronome
 
 import android.media.AudioAttributes
-import android.media.Image
 import android.media.SoundPool
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
@@ -12,8 +11,6 @@ import android.view.View
 import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.TextView
-import java.util.concurrent.ForkJoinPool
-
 
 class MetronomeActivity : AppCompatActivity(), MetronomePresenterOutput, Runnable,View.OnTouchListener {
     enum class PushButtonType{
@@ -35,7 +32,7 @@ class MetronomeActivity : AppCompatActivity(), MetronomePresenterOutput, Runnabl
      */
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
+        
 
         val audioAtributes = AudioAttributes.Builder()
             .setUsage(AudioAttributes.USAGE_GAME)
@@ -73,12 +70,10 @@ class MetronomeActivity : AppCompatActivity(), MetronomePresenterOutput, Runnabl
             soundPool.play(tempoSound, 1.0f, 1.0f, 0, 0, 1.0f)
         }
     }
-    var handler: Handler = Handler()
-    val longPressHandler = Handler()
-    val longPressReceiver = Runnable {
-        handler.post(this)
-    }
 
+    /**
+     * Event
+     */
     override fun onTouch(v: View?, event: MotionEvent?): Boolean {
         when (v!!.id) {
             R.id.addTempoButton -> {
@@ -109,6 +104,12 @@ class MetronomeActivity : AppCompatActivity(), MetronomePresenterOutput, Runnabl
             }
         }
         return false
+    }
+
+    var handler: Handler = Handler()
+    val longPressHandler = Handler()
+    val longPressReceiver = Runnable {
+        handler.post(this)
     }
 
     override fun run() {
